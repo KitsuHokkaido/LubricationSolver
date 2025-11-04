@@ -34,6 +34,7 @@ class NewtonSolver:
                 print(f"Iteration {i + 1}")
                 print("--------------")
                 print(f"s = {s:0.3f}")
+                print(f"res = {np.abs(func(s))}")
                 print()
 
             s_new = s - (func(s) / self._derivative(func, s))

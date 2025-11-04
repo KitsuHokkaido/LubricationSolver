@@ -12,6 +12,5 @@ class LubricationSolver:
 
     def solve(self, geometry_type):
         if geometry_type == Geometry.SQUEEZE: 
-            self._squeeze_film_damper.solve(tau_zero_star=5, epsilon=0.75)
-
+            self._squeeze_film_damper.solve(tau_zero_star=5, epsilon=0.75, nb_points=201, verbose=False)
 
