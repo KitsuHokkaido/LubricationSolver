@@ -1,12 +1,12 @@
 geometry: "SQUEEZE"
 
 constantes:
-  R0: 5
-  Ri: 4 
-  mu: 1e-5
-  U1: 1
-  U2: 1
+  R0: 0.2
+  Ri: 0.18
+  mu: 0.2
+  U1: 100
+  U2: 100
 
-mutable:
+parameters:
   tau_0: 5
   epsilon: 0.25

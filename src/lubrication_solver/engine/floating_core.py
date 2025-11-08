@@ -1,12 +1,13 @@
 import numpy as np
 from numpy.polynomial.polynomial import Polynomial
-from numpy.typing import NDArray
 
-class FloatingCore:
-    def __init__(self, U1, U2, mu, R0=0, Ri=0):
-        self._U1 = U1
-        self._U2 = U2
-        self._mu = mu
+from .flow import FlowModel
+
+
+class FloatingCore(FlowModel):
+    def __init__(self, U1, U2, mu, R0, Ri):
+        super().__init__(U1, U2, mu)
+
         self._R = R0
         self._omega_R = -U1
         self._c = R0 - Ri
@@ -14,12 +15,10 @@ class FloatingCore:
         self._tol_complex_number = 1e-10
 
     def tau_1(self, h, dp_dx, tau_0):
-        pre_factor = - dp_dx / (2 * h * dp_dx + 4 * tau_0)
+        pre_factor = -dp_dx / (2 * h * dp_dx + 4 * tau_0)
 
         parenthesis = (
-            h**2 * dp_dx
-            + 2 * h * tau_0
-            + 2 * self._mu * (self._U1 - self._U2)
+            h**2 * dp_dx + 2 * h * tau_0 + 2 * self._mu * (self._U1 - self._U2)
         )
 
         return pre_factor * parenthesis
@@ -38,24 +37,27 @@ class FloatingCore:
             [
                 -4 * tau_0**3,
                 0,
-                3
-                * (
-                    4 * self._mu * (self._omega_R * h + q)
-                    + h**2 * tau_0
-                ),
+                3 * (4 * self._mu * (self._omega_R * h + q) + h**2 * tau_0),
                 h**3,
             ]
         )
 
-        return Polynomial(coef=coeffs) 
+        return Polynomial(coef=coeffs)
 
-
-    def _compute_dp_dx(self, q, h, tau_0, reference_flux) -> NDArray:
+    def compute_dp_dx(
+        self, h: float, q: float, tau_0: float = 0, reference_flux: float = 0
+    ) -> float:
         poly = self._cubic_dp_dx(q, h, tau_0)
         roots = poly.roots()
 
-        real_roots = np.array([np.real(root) for root in roots if np.imag(root) < self._tol_complex_number])
-        
+        real_roots = np.array(
+            [
+                np.real(root)
+                for root in roots
+                if np.imag(root) < self._tol_complex_number
+            ]
+        )
+
         true_root = []
         for root in real_roots:
             if np.sign(root) == np.sign(reference_flux):
@@ -65,9 +67,4 @@ class FloatingCore:
                 if 0 < ha < hb < h:
                     true_root.append(root)
 
-        return np.array(true_root)
-
-
-
-
- 
+        return np.array(true_root)[0]

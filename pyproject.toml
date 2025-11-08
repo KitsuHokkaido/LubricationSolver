@@ -24,11 +24,11 @@ dev = [
 ]
 
 [project.scripts]
-lubrication-solver = "lubrication_solver.main:main"
+lubrication-solver = "lubrication_solver.cli:main"
 
 [tool.black]
 line-length = 88
-target-version = ['py310']
+target-version = ['py36']
 skip-string-normalization = true
 
 [tool.setuptools]

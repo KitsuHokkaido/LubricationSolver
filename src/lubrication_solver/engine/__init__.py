@@ -1,3 +1,4 @@
-from .solver import LubricationSolver, Geometry
+from .squeeze_damper import SqueezeDamper
+from .journal_bearing import JournalBearing
 
-__all__ = ["LubricationSolver", "Geometry"]
+__all__ = ["SqueezeDamper", "JournalBearing"]
