@@ -28,7 +28,6 @@ def plot_squeeze(datas):
     plt.figure(figsize=(10, 8))
     
     p = datas["p"]
-    print(p.shape[0])
 
     plt.plot(x, p, label="p")
     
@@ -49,6 +48,20 @@ def plot_squeeze(datas):
 
     plt.xlabel(r"angular coordinates $\theta / \pi$")
     plt.ylabel(r"relative coordinates $y/h$")
+    plt.title(f"$\\tau_0 = {datas["tau_0*"]}$, $\\epsilon = {datas["epsilon"]}$, $q* = {datas["q*"]:.3f}$")
+    plt.grid(True, alpha=0.3)
+
+    plt.legend()
+    plt.tight_layout()
+
+
+    plt.figure(figsize=(10, 8))
+    
+    dp_dxs = datas["dp_dxs"]
+    plt.plot(x, dp_dxs, 'b+', label="dp/dx")
+
+    plt.xlabel(r"angular coordinates $\theta / \pi$")
+    plt.ylabel(r"$dp/dx$")
     plt.title(f"$\\tau_0 = {datas["tau_0*"]}$, $\\epsilon = {datas["epsilon"]}$, $q* = {datas["q*"]:.3f}$")
     plt.grid(True, alpha=0.3)
 

@@ -9,7 +9,7 @@ class FloatingCore(FlowModel):
         super().__init__(U1, U2, mu)
 
         self._R = R0
-        self._omega_R = -U1
+        self._omega_R = np.abs(-U1)
         self._c = R0 - Ri
 
         self._tol_complex_number = 1e-10
@@ -50,21 +50,28 @@ class FloatingCore(FlowModel):
         poly = self._cubic_dp_dx(q, h, tau_0)
         roots = poly.roots()
 
-        real_roots = np.array(
-            [
-                np.real(root)
-                for root in roots
-                if np.imag(root) < self._tol_complex_number
-            ]
-        )
+        real_roots = [
+            np.real(root)
+            for root in roots
+            if np.abs(np.imag(root)) < self._tol_complex_number
+        ]
 
-        true_root = []
-        for root in real_roots:
-            if np.sign(root) == np.sign(reference_flux):
-                ha = self.h_a(h, root, -np.sign(root) * np.abs(tau_0))
-                hb = self.h_b(h, root, -np.sign(root) * np.abs(tau_0))
+        if len(real_roots) == 0:
+            return reference_flux
 
-                if 0 < ha < hb < h:
-                    true_root.append(root)
+        same_sign_roots = np.array([
+            root 
+            for root in real_roots 
+            if np.sign(root) == np.sign(reference_flux)
+        ])
+        
+        #print(same_sign_roots)
 
-        return np.array(true_root)[0]
+        if len(same_sign_roots) == 0:
+            return reference_flux
+        
+        index_right_dpdx = np.argmin(np.abs(same_sign_roots - reference_flux))
+
+        return same_sign_roots[index_right_dpdx]
+
+        

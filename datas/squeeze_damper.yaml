@@ -9,4 +9,4 @@ constantes:
 
 parameters:
   tau_0: 5
-  epsilon: 0.25
+  epsilon: 0.75

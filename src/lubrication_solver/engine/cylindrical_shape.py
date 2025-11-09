@@ -4,6 +4,10 @@ from numpy.typing import NDArray
 from scipy.integrate import cumulative_trapezoid
 from typing import Tuple
 
+
+from .no_core import NoCore
+from .floating_core import FloatingCore
+
 from ..newton_solver.solver import NewtonSolver
 from .flow import FlowModel
 
@@ -13,12 +17,15 @@ class CylindricalShape:
         self._mu = mu
 
         self._c = R0 - Ri
-        self._omega_R = -U1
+        self._omega_R = np.abs(-U1)
         self._R = R0
 
         self._verbose = False
         self._grid = None
         self._datas = None
+
+        self._no_core = NoCore(U1, U2, mu)
+        self._floating_core = FloatingCore(U1, U2, mu, R0, Ri)
 
     def _set_grid(self, nb_points):
         self._grid = np.linspace(0, 2 * np.pi * self._R, nb_points)
@@ -27,7 +34,7 @@ class CylindricalShape:
         return self._c * (1 + epsilon * np.cos(x / self._R))
 
     @abstractmethod
-    def _get_flow_type(self, h, q, tau_0) -> FlowModel:
+    def _get_flow_type(self, h, q, tau_0) -> Tuple[FlowModel, float]:
         pass
 
     def _compute_dp_dxs(self, q, epsilon, tau_0) -> NDArray:
@@ -38,8 +45,11 @@ class CylindricalShape:
         for i in range(self._grid.shape[0]):
             h = self._compute_h(self._grid[i], epsilon)
 
-            flow = self._get_flow_type(h, q, tau_0)
-            dp_dxs[i] = flow.compute_dp_dx(h, q, tau_0)
+            flow, ref_flux = self._get_flow_type(h, q, tau_0)
+
+            tau_zero = -np.sign(ref_flux) * tau_0
+
+            dp_dxs[i] = flow.compute_dp_dx(h, q, tau_zero, ref_flux)
 
         return dp_dxs
 
@@ -53,10 +63,12 @@ class CylindricalShape:
         for i in range(self._grid.shape[0]):
             h = self._compute_h(self._grid[i], epsilon)
 
-            flow = self._get_flow_type(h, q, tau_0)
-            dp_dx = flow.compute_dp_dx(h, q, tau_0)
+            flow, ref_flux = self._get_flow_type(h, q, tau_0)
+            tau_zero = -np.sign(ref_flux) * tau_0
 
-            tau_zero = np.sign(dp_dx) * tau_0
+            dp_dx = flow.compute_dp_dx(h, q, tau_zero, ref_flux)
+
+            tau_zero = -np.sign(dp_dx) * tau_0
 
             ha[i] = flow.h_a(h, dp_dx, tau_zero) / h
             hb[i] = flow.h_b(h, dp_dx, tau_zero) / h
@@ -86,7 +98,8 @@ class CylindricalShape:
         print()
 
         def residus(q):
-            return self._compute_p(q, epsilon, tau_0)[-1]
+            p = self._compute_p(q, epsilon, tau_0)
+            return p[-1] - p[0]
 
         newton_solver = NewtonSolver([residus], vb=True)
 
@@ -109,17 +122,32 @@ class CylindricalShape:
         if self._grid is None:
             return
 
-        q = -0.934 * self._omega_R * self._c
-
+        #q = -0.3835 * self._omega_R * self._c
+        
+        dp_dxs = self._compute_dp_dxs(q, epsilon, tau_0)
         p = self._compute_p(q, epsilon, tau_0)
-        p = ((p - p[0]) * self._c**2)/ (self._mu * self._omega_R * self._R)
+        
+        print(f"p(0) = {p[0]}, p(2\\pi) = {p[-1]}, p(2\\pi) - p(0) = {p[-1] - p[0]}")
+        sum_dp = np.sum(dp_dxs) * (self._grid[1] - self._grid[0])
+        print(f"Somme des dp_dxs * Delta_theta = {sum_dp}")
+
+        p = ((p - p[0]) * self._c**2) / (self._mu * self._omega_R * self._R)
 
         ha, hb = self._compute_all_ha_hb(q, epsilon, tau_0)
-        
-        q_star = q / (self._omega_R * self._c) 
+
+        q_star = q / (self._omega_R * self._c)
         tau_zero_star = np.abs(tau_0 * self._c / (self._mu * self._omega_R))
 
-        self._datas = {"x": self._grid / (np.pi * self._R), "p": p, "ha": ha, "hb": hb, "q*": q_star, "epsilon": epsilon, "tau_0*": tau_zero_star}
+        self._datas = {
+            "x": self._grid / (np.pi * self._R),
+            "p": p,
+            "ha": ha,
+            "hb": hb,
+            "q*": q_star,
+            "epsilon": epsilon,
+            "tau_0*": tau_zero_star,
+            "dp_dxs": self._R * dp_dxs
+        }
 
     @property
     def post_processing_datas(self):

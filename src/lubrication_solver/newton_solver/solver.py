@@ -6,6 +6,7 @@ import time
 
 from ..error.error import Result
 
+
 class NewtonSolver:
     def __init__(self, res: List[Callable], vb: bool):
         self._deg = len(res)
