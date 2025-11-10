@@ -7,6 +7,15 @@ import matplotlib.pyplot as plt
 
 from .engine.squeeze_damper import SqueezeDamper
 
+COLORS = ["#4C72B0",
+          "#55A868",
+          "#C44E52",
+          "#8172B3"]
+
+
+script_dir = Path(__file__).parent
+project_root = script_dir.parent.parent
+OUTPUT_DIR = project_root / "outputs"
 
 def pars_arg():
     parser = argparse.ArgumentParser(
@@ -55,17 +64,22 @@ def plot_squeeze(datas: Dict) -> None:
 
         if isinstance(y, List):
             for j in range(len(y)):
-                plt.plot(x[i], y[j], label=labels[i][j])
+                plt.plot(x[i], y[j], label=labels[i][j], linewidth=2, color=COLORS[i + j])
         else:
-            plt.plot(x[i], y, label=labels[i])
+            plt.plot(x[i], y, "r+", label=labels[i], color=COLORS[i])
 
         plt.xlabel(label_x[i])
         plt.ylabel(label_y[i])
-        plt.title(title)
-        plt.grid(True, alpha=0.3)
+        plt.title(title, fontsize=13, fontweight='bold')
+        plt.grid(True, linestyle="--", alpha=0.3)
 
-        plt.legend()
+        plt.legend(fontsize=9)
         plt.tight_layout()
+
+        plt.savefig(f"{OUTPUT_DIR}/fig_{i}.pdf", 
+            format='pdf',
+            bbox_inches='tight',
+            pad_inches=0.1)
 
     plt.show()
 

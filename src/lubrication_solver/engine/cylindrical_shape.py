@@ -130,7 +130,7 @@ class CylindricalShape:
         if self._grid is None:
             raise RuntimeError("A problem occurs when setting the grid")
 
-        q = -0.3835 * self._omega_R * self._c
+        #q = -0.3835 * self._omega_R * self._c
 
         dp_dxs = self._compute_dp_dxs(q, epsilon, tau_0)
         p = self._compute_p(q, epsilon, tau_0)
