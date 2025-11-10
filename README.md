@@ -23,8 +23,8 @@ Les fluides de Bingham sont caractérisés par :
 ### Installation rapide
 ```bash
 # Cloner le repository
-git clone https://github.com/votre-username/bingham-lubrication.git
-cd bingham-lubrication
+git clone https://github.com/KitsuHokkaido/LubricationSolver.git
+cd lubrication-solver
 
 # Créer un environnement virtuel (recommandé)
 python -m venv venv
@@ -43,11 +43,11 @@ source venv/bin/activate
 pip install -e .
 ```
 
-## 📖 Utilisation
+## Utilisation
 
 ### Exemple basique : Squeeze Film Damper
 ```python
-from bingham_lubrication import SqueezeFilmDamper, BearingConfig
+from lubrication_solver import SqueezeDamper
 
 # Paramètres géométriques et physiques
 omega = 500      # rad/s - vitesse de précession
@@ -77,7 +77,7 @@ print(squeeze_damper.post_processing_datas)
 ```
 
 
-## 📚 Références
+## Références
 
 **Article principal :**
 - Tichy, J. A. (1991). "Hydrodynamic lubrication theory for the Bingham plastic flow model". *Journal of Rheology*, 35(4), 477-496.
