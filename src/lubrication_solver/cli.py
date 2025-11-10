@@ -2,9 +2,11 @@ import argparse
 from pathlib import Path
 import yaml
 
+from typing import Dict, List
 import matplotlib.pyplot as plt
 
 from .engine.squeeze_damper import SqueezeDamper
+
 
 def pars_arg():
     parser = argparse.ArgumentParser(
@@ -22,71 +24,77 @@ def pars_arg():
 
     return parser.parse_args()
 
-def plot_squeeze(datas): 
-    x = datas["x"]
 
-    plt.figure(figsize=(10, 8))
-    
-    p = datas["p"]
+def plot_squeeze(datas: Dict) -> None:
+    plt.style.use("seaborn-v0_8-whitegrid")
 
-    plt.plot(x, p, label="p")
-    
-    plt.xlabel(r"angular coordinates $\theta / \pi$")
-    plt.ylabel(r"pressure $p^*$")
-    plt.title(f"$\\tau_0 = {datas["tau_0*"]}$, $\\epsilon = {datas["epsilon"]}$, $q* = {datas["q*"]:.3f}$")
-    plt.grid(True, alpha=0.3)
-    
-    plt.legend()
-    plt.tight_layout()
+    x = [datas["theta"], datas["theta"], datas["theta"], datas["u"][0][0]]
 
-    plt.figure(figsize=(10, 8))
-    
-    ha = datas["ha"]
-    hb = datas["hb"]
-    plt.plot(x, ha, label="ha")
-    plt.plot(x, hb, label="hb")
+    all_y_data = [
+        datas["p*"],
+        [datas["ha"], datas["hb"]],
+        datas["dp_dxs"],
+        datas["u"][0][1],
+    ]
 
-    plt.xlabel(r"angular coordinates $\theta / \pi$")
-    plt.ylabel(r"relative coordinates $y/h$")
-    plt.title(f"$\\tau_0 = {datas["tau_0*"]}$, $\\epsilon = {datas["epsilon"]}$, $q* = {datas["q*"]:.3f}$")
-    plt.grid(True, alpha=0.3)
+    labels = ["p*", [r"$h_a$", r"$h_b$"], r"$dp/dx$", f"$u(y)$ - {datas['u'][1]}"]
 
-    plt.legend()
-    plt.tight_layout()
+    label_x = [
+        r"angular coordinates $\theta / \pi$",
+        r"angular coordinates $\theta / \pi$",
+        r"angular coordinates $\theta / \pi$",
+        r"$y$",
+    ]
 
+    label_y = [r"pressure $p^*$", r"relative coordinates $y/h$", r"$dp/dx$", r"$u(y)$"]
 
-    plt.figure(figsize=(10, 8))
-    
-    dp_dxs = datas["dp_dxs"]
-    plt.plot(x, dp_dxs, 'b+', label="dp/dx")
+    title = f"$\\tau_0 = {datas["tau_0*"]}$, $\\epsilon = {datas["epsilon"]}$, $q* = {datas["q*"]:.3f}$"
 
-    plt.xlabel(r"angular coordinates $\theta / \pi$")
-    plt.ylabel(r"$dp/dx$")
-    plt.title(f"$\\tau_0 = {datas["tau_0*"]}$, $\\epsilon = {datas["epsilon"]}$, $q* = {datas["q*"]:.3f}$")
-    plt.grid(True, alpha=0.3)
+    for i, y in enumerate(all_y_data):
+        plt.figure(figsize=(10, 8))
 
-    plt.legend()
-    plt.tight_layout()
+        if isinstance(y, List):
+            for j in range(len(y)):
+                plt.plot(x[i], y[j], label=labels[i][j])
+        else:
+            plt.plot(x[i], y, label=labels[i])
+
+        plt.xlabel(label_x[i])
+        plt.ylabel(label_y[i])
+        plt.title(title)
+        plt.grid(True, alpha=0.3)
+
+        plt.legend()
+        plt.tight_layout()
 
     plt.show()
 
-def handle_squeeze(constantes, parameters):
+
+def handle_squeeze(datas: Dict) -> None:
+    constantes = datas["constantes"]
+    parameters = datas["parameters"]
+
     squeeze_damper = SqueezeDamper(
-        U1=constantes["U1"], 
-        U2=constantes["U2"], 
-        mu=constantes["mu"], 
-        R0=constantes["R0"], 
-        Ri=constantes["Ri"]
+        U1=constantes["U1"],
+        U2=constantes["U2"],
+        mu=constantes["mu"],
+        R0=constantes["R0"],
+        Ri=constantes["Ri"],
     )
 
     squeeze_damper.solve(
-        tau_zero_star=parameters["tau_0"], 
-        epsilon=parameters["epsilon"], 
-        nb_points=201, 
-        verbose=True
+        tau_zero_star=parameters["tau_0"],
+        epsilon=parameters["epsilon"],
+        nb_points=parameters["nb_points"],
+        verbose=True,
     )
 
     plot_squeeze(squeeze_damper.post_processing_datas)
+
+
+def handle_bearing():
+    return
+
 
 def main() -> None:
     args = pars_arg()
@@ -98,13 +106,11 @@ def main() -> None:
     with open(filename, "r") as f:
         datas = yaml.safe_load(f)
 
-    constantes = datas["constantes"]
-    parameters = datas["parameters"]
-    
+
     match datas["geometry"]:
         case "SQUEEZE":
-            handle_squeeze(constantes, parameters)
+            handle_squeeze(datas)
+        case "BEARING":
+            handle_bearing()
         case _:
             print("Situation does not exist")
-
-

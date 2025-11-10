@@ -10,13 +10,12 @@ from .flow import FlowModel
 
 
 class SqueezeDamper(CylindricalShape):
-    def __init__(self, U1, U2, mu, R0, Ri):
+    def __init__(self, U1: float, U2: float, mu: float, R0: float, Ri: float):
         super().__init__(U1, U2, mu, R0, Ri)
 
-        self._no_core = NoCore(U1, U2, mu)
-        self._floating_core = FloatingCore(U1, U2, mu, R0, Ri)
-
-    def _get_flow_type(self, h, q, tau_0) -> Tuple[FlowModel, float]:
+    def _get_flow_type(
+        self, h: float, q: float, tau_0: float
+    ) -> Tuple[FlowModel, float]:
         dp_dx_ref = self._no_core.compute_dp_dx(h, q)
         tau_zero = -np.sign(dp_dx_ref) * tau_0
 
@@ -28,7 +27,6 @@ class SqueezeDamper(CylindricalShape):
         hb = self._floating_core.h_b(h, dp_dx, tau_zero)
 
         if 0 < ha < hb < h:
-            print("Detected")
             return self._floating_core, dp_dx_ref
 
         return self._floating_core, dp_dx_ref

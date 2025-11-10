@@ -10,3 +10,6 @@ constantes:
 parameters:
   tau_0: 5
   epsilon: 0.75
+  speed_at: 0.2
+  nb_points: 201
+
